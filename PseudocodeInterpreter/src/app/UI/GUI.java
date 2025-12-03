@@ -4,6 +4,18 @@
  */
 package app.UI;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.List;
+import pseudocode.errors.LexerException;
+import pseudocode.errors.ParserException;
+import pseudocode.errors.RuntimeError;
+import pseudocode.interpreter.Interpreter;
+import pseudocode.lexer.Lexer;
+import pseudocode.lexer.Token;
+import pseudocode.parser.Parser;
+import pseudocode.parser.ProgramNode;
+
 /**
  *
  * @author ispaycy
@@ -84,7 +96,6 @@ public class GUI extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(51, 51, 51));
-        setPreferredSize(new java.awt.Dimension(1366, 768));
 
         BG.setLayout(new java.awt.BorderLayout());
 
@@ -352,7 +363,50 @@ public class GUI extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void RunActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RunActionPerformed
-        // TODO add your handling code here:
+        // Execute pseudocode from the editor and show output in the console area
+        String program = jEditorPane1.getText();
+        jTextArea1.setText("");
+
+        if (program == null || program.trim().isEmpty()) {
+            jTextArea1.setText("No pseudocode to run.");
+            return;
+        }
+
+        // Capture output written via System.out (used by BuiltInFunctions.builtinPrint)
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos, true);
+        PrintStream oldOut = System.out;
+        System.setOut(ps);
+
+        try {
+            Lexer lexer = new Lexer(program);
+            List<Token> tokens = lexer.tokenize();
+
+            Parser parser = new Parser(tokens);
+            ProgramNode p = parser.parseProgram();
+
+            Interpreter interpreter = new Interpreter();
+            interpreter.runProgram(p);
+
+            String output = baos.toString();
+            if (output.isEmpty()) {
+                jTextArea1.setText("(Program finished with no output.)");
+            } else {
+                jTextArea1.setText(output);
+            }
+        } catch (LexerException | ParserException | RuntimeError e) {
+            jTextArea1.setText("Error: " + e.getMessage());
+        } catch (Exception e) {
+            jTextArea1.setText("Unexpected error: " + e.getMessage());
+        } finally {
+            System.setOut(oldOut);
+            try {
+                ps.close();
+                baos.close();
+            } catch (Exception ex) {
+                // ignore
+            }
+        }
     }//GEN-LAST:event_RunActionPerformed
 
     private void InstructionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_InstructionsActionPerformed
@@ -364,7 +418,8 @@ public class GUI extends javax.swing.JFrame {
     }//GEN-LAST:event_SequenceActionPerformed
 
     private void CleanTermActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CleanTermActionPerformed
-        // TODO add your handling code here:
+        // Clear the output console
+        jTextArea1.setText("");
     }//GEN-LAST:event_CleanTermActionPerformed
 
     /**
