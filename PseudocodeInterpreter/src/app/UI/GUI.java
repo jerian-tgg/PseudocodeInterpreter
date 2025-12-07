@@ -43,6 +43,13 @@ public class GUI extends javax.swing.JFrame {
         setTitle("Jernat Pseudocode Interpreter");
         setIconImage(ImageIO.read(new File("icon.png")));
         
+        New.setContentAreaFilled(false);
+        Open.setContentAreaFilled(false);
+        Save.setContentAreaFilled(false);
+        SaveAs.setContentAreaFilled(false);
+        Run.setContentAreaFilled(false);
+        CleanTerm.setContentAreaFilled(false);
+        
         // Replace JEditorPane with JTextPane (for syntax highlighting support)
         // The form file creates JEditorPane, but we need JTextPane for styled text
         textPane = new javax.swing.JTextPane();
@@ -197,7 +204,9 @@ public class GUI extends javax.swing.JFrame {
         SaveAsFileCont = new javax.swing.JMenuItem();
         Help = new javax.swing.JMenu();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
+        jMenuItem1 = new javax.swing.JMenuItem();
         About = new javax.swing.JMenu();
+        jMenuItem2 = new javax.swing.JMenuItem();
 
         jButton2.setText("newf");
         jButton2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -319,8 +328,9 @@ public class GUI extends javax.swing.JFrame {
         jScrollPane2.setBackground(new java.awt.Color(51, 51, 51));
         jScrollPane2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(51, 51, 51)));
 
-        jTextArea1.setBackground(new java.awt.Color(34, 34, 34));
+        jTextArea1.setBackground(new java.awt.Color(26, 26, 26));
         jTextArea1.setColumns(20);
+        jTextArea1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         jTextArea1.setForeground(new java.awt.Color(204, 204, 204));
         jTextArea1.setRows(5);
         jScrollPane2.setViewportView(jTextArea1);
@@ -337,6 +347,7 @@ public class GUI extends javax.swing.JFrame {
         jScrollPane1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(51, 51, 51)));
 
         jEditorPane1.setBackground(new java.awt.Color(34, 34, 34));
+        jEditorPane1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         jEditorPane1.setForeground(new java.awt.Color(204, 204, 204));
         jScrollPane1.setViewportView(jEditorPane1);
 
@@ -361,21 +372,41 @@ public class GUI extends javax.swing.JFrame {
 
         NewFileCont.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         NewFileCont.setText("New File");
+        NewFileCont.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                NewFileContActionPerformed(evt);
+            }
+        });
         File.add(NewFileCont);
         File.add(jSeparator8);
 
         OpenFileCont.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         OpenFileCont.setText("Open File");
+        OpenFileCont.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                OpenFileContActionPerformed(evt);
+            }
+        });
         File.add(OpenFileCont);
         File.add(jSeparator7);
 
         SaveFileCont.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         SaveFileCont.setText("Save File");
+        SaveFileCont.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SaveFileContActionPerformed(evt);
+            }
+        });
         File.add(SaveFileCont);
         File.add(jSeparator6);
 
         SaveAsFileCont.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.SHIFT_DOWN_MASK | java.awt.event.InputEvent.CTRL_DOWN_MASK));
         SaveAsFileCont.setText("Safe File As");
+        SaveAsFileCont.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SaveAsFileContActionPerformed(evt);
+            }
+        });
         File.add(SaveAsFileCont);
 
         Menu.add(File);
@@ -384,10 +415,29 @@ public class GUI extends javax.swing.JFrame {
         Help.setText("Help");
         Help.add(jSeparator1);
 
+        jMenuItem1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_I, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        jMenuItem1.setText("Instructions");
+        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem1ActionPerformed(evt);
+            }
+        });
+        Help.add(jMenuItem1);
+
         Menu.add(Help);
 
         About.setForeground(new java.awt.Color(51, 51, 51));
         About.setText("About");
+
+        jMenuItem2.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_SLASH, java.awt.event.InputEvent.SHIFT_DOWN_MASK | java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        jMenuItem2.setText("About this software");
+        jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem2ActionPerformed(evt);
+            }
+        });
+        About.add(jMenuItem2);
+
         Menu.add(About);
 
         setJMenuBar(Menu);
@@ -509,6 +559,80 @@ public class GUI extends javax.swing.JFrame {
         saveCurrentFile();
     }//GEN-LAST:event_SaveActionPerformed
 
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+        // TODO add your handling code here:
+        java.awt.EventQueue.invokeLater(new Runnable() {
+        public void run() {
+            Help helpWindow = new Help();
+            helpWindow.setVisible(true);
+        }
+    });
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+        // TODO add your handling code here:
+        About aboutWindow = new About();
+        aboutWindow.setLocationRelativeTo(this); // Center relative to main window
+        aboutWindow.setVisible(true);
+    }//GEN-LAST:event_jMenuItem2ActionPerformed
+
+    private void NewFileContActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NewFileContActionPerformed
+        // TODO add your handling code here:
+        if (!checkUnsavedChanges()) {
+        return;
+    }
+    
+    File newFile = fileOps.createNewFile(this);
+    if (newFile != null) {
+        textPane.setText("");
+        markAsSaved();
+        // Re-highlight after clearing
+        SwingUtilities.invokeLater(() -> {
+            syntaxHighlighter.highlightDocument();
+        });
+        JOptionPane.showMessageDialog(this, "New file created: " + newFile.getName());
+    }
+    }//GEN-LAST:event_NewFileContActionPerformed
+
+    private void OpenFileContActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OpenFileContActionPerformed
+        // TODO add your handling code here:
+        if (!checkUnsavedChanges()) {
+        return;
+    }
+    
+    File file = fileOps.openFile(this);
+    if (file != null) {
+        try {
+            String content = fileOps.readFile(file);
+            textPane.setText(content);
+            markAsSaved();
+            // Re-highlight after loading file
+            SwingUtilities.invokeLater(() -> {
+                syntaxHighlighter.highlightDocument();
+            });
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, 
+                "Error reading file: " + e.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    }//GEN-LAST:event_OpenFileContActionPerformed
+
+    private void SaveFileContActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveFileContActionPerformed
+        // TODO add your handling code here:
+        saveCurrentFile();
+    }//GEN-LAST:event_SaveFileContActionPerformed
+
+    private void SaveAsFileContActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveAsFileContActionPerformed
+        // TODO add your handling code here:
+            String content = textPane.getText();
+    if (fileOps.saveFileAs(this, content)) {
+        markAsSaved();
+        JOptionPane.showMessageDialog(this, "File saved successfully!");
+    }
+    }//GEN-LAST:event_SaveAsFileContActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -568,7 +692,9 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JMenuItem SaveFileCont;
     private javax.swing.JToolBar Tool;
     private javax.swing.JButton jButton2;
-    private javax.swing.text.JTextComponent jEditorPane1; // JTextPane for syntax highlighting (replaced in constructor)
+    private javax.swing.JEditorPane jEditorPane1;
+    private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;

@@ -19,22 +19,48 @@ import javax.swing.text.StyledDocument;
 public class SyntaxHighlighter {
     private final StyledDocument document;
     
-    // Color scheme
-private static final Color KEYWORD_COLOR     = new Color(198, 120, 221);  // Purple
-private static final Color STRING_COLOR      = new Color(152, 195, 121);  // Green
-private static final Color NUMBER_COLOR      = new Color(224, 108, 117);  // Red/Pink
-private static final Color OPERATOR_COLOR    = new Color( 97, 175, 239);  // Blue
-private static final Color IDENTIFIER_COLOR  = new Color(171, 178, 191);  // Soft Gray
-private static final Color COMMENT_COLOR     = new Color( 92,  99, 112);  // Dim Gray
-private static final Color DEFAULT_COLOR     = new Color(197, 200, 198);  // Light Gray
-
+    // SUBDUED COLOR PALETTE with VIBRANT OPERATORS
+    private static final Color CONTROL_KEYWORD_COLOR = new Color(220, 140, 140);     // Muted Red - IF, WHILE, FOR
+    private static final Color DECLARATION_KEYWORD_COLOR = new Color(220, 180, 100); // Muted Orange - FUNCTION, RETURN
+    private static final Color IO_KEYWORD_COLOR = new Color(120, 180, 220);          // Muted Cyan - PRINT, INPUT
+    private static final Color BOOLEAN_KEYWORD_COLOR = new Color(180, 140, 220);     // Muted Purple - AND, OR, NOT
+    private static final Color STRING_COLOR = new Color(140, 200, 140);              // Muted Green - "text"
+    private static final Color NUMBER_COLOR = new Color(220, 180, 100);              // Muted Gold - 123, 3.14
+    private static final Color OPERATOR_COLOR = new Color(255, 100, 100);            // VIBRANT RED - + - * / =
+    private static final Color VARIABLE_COLOR = new Color(200, 200, 200);            // Light Gray - x, y, count
+    private static final Color BOOLEAN_VALUE_COLOR = new Color(220, 160, 200);       // Muted Pink - TRUE, FALSE
+    private static final Color PARENTHESIS_COLOR = new Color(180, 180, 220);         // Muted Blue - ( )
+    private static final Color COMMA_COLOR = new Color(180, 180, 180);               // Medium Gray - ,
+    private static final Color COMMENT_COLOR = new Color(120, 160, 120);             // Muted Green - # comment
+    private static final Color DEFAULT_COLOR = new Color(200, 200, 200);             // Light Gray - other text
+    
+    // Alternative: Bright blue operators
+    /*
+    private static final Color OPERATOR_COLOR = new Color(100, 180, 255);            // VIBRANT BLUE - + - * / =
+    */
+    
+    // Alternative: Bright cyan operators  
+    /*
+    private static final Color OPERATOR_COLOR = new Color(0, 220, 220);              // VIBRANT CYAN - + - * / =
+    */
+    
+    // Alternative: Bright yellow operators
+    /*
+    private static final Color OPERATOR_COLOR = new Color(255, 220, 0);              // VIBRANT YELLOW - + - * / =
+    */
     
     // Styles
-    private Style keywordStyle;
+    private Style controlKeywordStyle;
+    private Style declarationKeywordStyle;
+    private Style ioKeywordStyle;
+    private Style booleanKeywordStyle;
     private Style stringStyle;
     private Style numberStyle;
     private Style operatorStyle;
-    private Style identifierStyle;
+    private Style variableStyle;
+    private Style booleanValueStyle;
+    private Style parenthesisStyle;
+    private Style commaStyle;
     private Style commentStyle;
     private Style defaultStyle;
     
@@ -44,26 +70,60 @@ private static final Color DEFAULT_COLOR     = new Color(197, 200, 198);  // Lig
     }
     
     private void initializeStyles() {
-        // Keyword style
-        keywordStyle = document.addStyle("keyword", null);
-        StyleConstants.setForeground(keywordStyle, KEYWORD_COLOR);
-        StyleConstants.setBold(keywordStyle, true);
+        // Control flow keyword style (IF, WHILE, FOR, etc.)
+        controlKeywordStyle = document.addStyle("control_keyword", null);
+        StyleConstants.setForeground(controlKeywordStyle, CONTROL_KEYWORD_COLOR);
+        StyleConstants.setBold(controlKeywordStyle, true);
+        
+        // Declaration keyword style (FUNCTION, RETURN)
+        declarationKeywordStyle = document.addStyle("declaration_keyword", null);
+        StyleConstants.setForeground(declarationKeywordStyle, DECLARATION_KEYWORD_COLOR);
+        StyleConstants.setBold(declarationKeywordStyle, true);
+        
+        // I/O keyword style (PRINT, INPUT)
+        ioKeywordStyle = document.addStyle("io_keyword", null);
+        StyleConstants.setForeground(ioKeywordStyle, IO_KEYWORD_COLOR);
+        StyleConstants.setBold(ioKeywordStyle, true);
+        
+        // Boolean keyword style (AND, OR, NOT)
+        booleanKeywordStyle = document.addStyle("boolean_keyword", null);
+        StyleConstants.setForeground(booleanKeywordStyle, BOOLEAN_KEYWORD_COLOR);
+        StyleConstants.setBold(booleanKeywordStyle, true);
         
         // String style
         stringStyle = document.addStyle("string", null);
         StyleConstants.setForeground(stringStyle, STRING_COLOR);
+        StyleConstants.setBold(stringStyle, false);
         
         // Number style
         numberStyle = document.addStyle("number", null);
         StyleConstants.setForeground(numberStyle, NUMBER_COLOR);
+        StyleConstants.setBold(numberStyle, false);
         
-        // Operator style
+        // Operator style - VIBRANT and BOLD
         operatorStyle = document.addStyle("operator", null);
         StyleConstants.setForeground(operatorStyle, OPERATOR_COLOR);
+        StyleConstants.setBold(operatorStyle, true); // Make operators bold and vibrant
         
-        // Identifier style
-        identifierStyle = document.addStyle("identifier", null);
-        StyleConstants.setForeground(identifierStyle, IDENTIFIER_COLOR);
+        // Variable style (identifiers) - LIGHT GRAY
+        variableStyle = document.addStyle("variable", null);
+        StyleConstants.setForeground(variableStyle, VARIABLE_COLOR);
+        StyleConstants.setBold(variableStyle, false);
+        
+        // Boolean value style (TRUE, FALSE)
+        booleanValueStyle = document.addStyle("boolean_value", null);
+        StyleConstants.setForeground(booleanValueStyle, BOOLEAN_VALUE_COLOR);
+        StyleConstants.setBold(booleanValueStyle, false);
+        
+        // Parenthesis style
+        parenthesisStyle = document.addStyle("parenthesis", null);
+        StyleConstants.setForeground(parenthesisStyle, PARENTHESIS_COLOR);
+        StyleConstants.setBold(parenthesisStyle, false);
+        
+        // Comma style
+        commaStyle = document.addStyle("comma", null);
+        StyleConstants.setForeground(commaStyle, COMMA_COLOR);
+        StyleConstants.setBold(commaStyle, false);
         
         // Comment style
         commentStyle = document.addStyle("comment", null);
@@ -226,9 +286,8 @@ private static final Color DEFAULT_COLOR     = new Color(197, 200, 198);  // Lig
                     // Get the actual lexeme from the document to ensure accuracy
                     String lexeme = text.substring(idStart, Math.min(idStart + idLength, length)).toUpperCase();
                     
-                    // Check if it's a keyword
-                    boolean isKeyword = isKeyword(lexeme);
-                    Style style = isKeyword ? keywordStyle : identifierStyle;
+                    // Get the appropriate style based on keyword category
+                    Style style = getKeywordStyle(lexeme);
                     
                     int actualLength = Math.min(idLength, docLength - idStart);
                     document.setCharacterAttributes(idStart, actualLength, style, true);
@@ -236,7 +295,31 @@ private static final Color DEFAULT_COLOR     = new Color(197, 200, 198);  // Lig
                 continue;
             }
             
-            // Handle operators
+            // Handle special values like TRUE, FALSE
+            if (c == 'T' || c == 'F' || c == 't' || c == 'f') {
+                int valueStart = pos;
+                // Check if this might be TRUE or FALSE (case-insensitive)
+                String upperText = text.substring(pos, Math.min(pos + 5, length)).toUpperCase();
+                if (upperText.startsWith("TRUE")) {
+                    pos += 4;
+                    if (valueStart < docLength) {
+                        int valueLength = pos - valueStart;
+                        int actualLength = Math.min(valueLength, docLength - valueStart);
+                        document.setCharacterAttributes(valueStart, actualLength, booleanValueStyle, true);
+                    }
+                    continue;
+                } else if (upperText.startsWith("FALSE")) {
+                    pos += 5;
+                    if (valueStart < docLength) {
+                        int valueLength = pos - valueStart;
+                        int actualLength = Math.min(valueLength, docLength - valueStart);
+                        document.setCharacterAttributes(valueStart, actualLength, booleanValueStyle, true);
+                    }
+                    continue;
+                }
+            }
+            
+            // Handle operators and punctuation - OPERATORS ARE VIBRANT!
             int opStart = pos;
             
             switch (c) {
@@ -245,15 +328,34 @@ private static final Color DEFAULT_COLOR     = new Color(197, 200, 198);  // Lig
                 case '*':
                 case '/':
                 case '%':
+                    pos++;
+                    if (opStart < docLength) {
+                        document.setCharacterAttributes(opStart, 1, operatorStyle, true);
+                    }
+                    break;
                 case '(':
                 case ')':
+                    pos++;
+                    if (opStart < docLength) {
+                        document.setCharacterAttributes(opStart, 1, parenthesisStyle, true);
+                    }
+                    break;
                 case ',':
                     pos++;
+                    if (opStart < docLength) {
+                        document.setCharacterAttributes(opStart, 1, commaStyle, true);
+                    }
                     break;
                 case '=':
                     pos++;
+                    // Check if it's comparison operator (==)
                     if (pos < length && text.charAt(pos) == '=') {
                         pos++; // ==
+                    }
+                    if (opStart < docLength) {
+                        int opLength = pos - opStart;
+                        int actualLength = Math.min(opLength, docLength - opStart);
+                        document.setCharacterAttributes(opStart, actualLength, operatorStyle, true);
                     }
                     break;
                 case '!':
@@ -261,39 +363,69 @@ private static final Color DEFAULT_COLOR     = new Color(197, 200, 198);  // Lig
                     if (pos < length && text.charAt(pos) == '=') {
                         pos++; // !=
                     }
-                    break;
-                case '>':
-                    pos++;
-                    if (pos < length && text.charAt(pos) == '=') {
-                        pos++; // >=
+                    if (opStart < docLength) {
+                        int opLength = pos - opStart;
+                        int actualLength = Math.min(opLength, docLength - opStart);
+                        document.setCharacterAttributes(opStart, actualLength, operatorStyle, true);
                     }
                     break;
+                case '>':
                 case '<':
                     pos++;
                     if (pos < length && text.charAt(pos) == '=') {
-                        pos++; // <=
+                        pos++; // >= or <=
+                    }
+                    if (opStart < docLength) {
+                        int opLength = pos - opStart;
+                        int actualLength = Math.min(opLength, docLength - opStart);
+                        document.setCharacterAttributes(opStart, actualLength, operatorStyle, true);
                     }
                     break;
                 default:
                     pos++; // skip unknown character (keep default style)
                     break;
             }
-            
-            int opLength = pos - opStart;
-            if (opStart < docLength && opLength > 0) {
-                int actualLength = Math.min(opLength, docLength - opStart);
-                document.setCharacterAttributes(opStart, actualLength, operatorStyle, true);
-            }
         }
     }
     
     /**
-     * Checks if a lexeme is a keyword
+     * Returns the appropriate style for a keyword based on its category
      */
-    private boolean isKeyword(String lexeme) {
+    private Style getKeywordStyle(String lexeme) {
+        // Control flow keywords
+        if (isControlFlowKeyword(lexeme)) {
+            return controlKeywordStyle;
+        }
+        
+        // Declaration keywords
+        if (isDeclarationKeyword(lexeme)) {
+            return declarationKeywordStyle;
+        }
+        
+        // I/O keywords
+        if (isIOKeyword(lexeme)) {
+            return ioKeywordStyle;
+        }
+        
+        // Boolean keywords
+        if (isBooleanKeyword(lexeme)) {
+            return booleanKeywordStyle;
+        }
+        
+        // Boolean values
+        if (lexeme.equals("TRUE") || lexeme.equals("FALSE")) {
+            return booleanValueStyle;
+        }
+        
+        // Default to variable style for non-keywords (identifiers)
+        return variableStyle;
+    }
+    
+    /**
+     * Checks if a lexeme is a control flow keyword
+     */
+    private boolean isControlFlowKeyword(String lexeme) {
         switch (lexeme) {
-            case "PRINT":
-            case "INPUT":
             case "IF":
             case "THEN":
             case "ELSE":
@@ -309,8 +441,43 @@ private static final Color DEFAULT_COLOR     = new Color(197, 200, 198);  // Lig
             case "TO":
             case "ENDFOR":
             case "END_FOR":
+                return true;
+            default:
+                return false;
+        }
+    }
+    
+    /**
+     * Checks if a lexeme is a declaration keyword
+     */
+    private boolean isDeclarationKeyword(String lexeme) {
+        switch (lexeme) {
             case "FUNCTION":
             case "RETURN":
+                return true;
+            default:
+                return false;
+        }
+    }
+    
+    /**
+     * Checks if a lexeme is an I/O keyword
+     */
+    private boolean isIOKeyword(String lexeme) {
+        switch (lexeme) {
+            case "PRINT":
+            case "INPUT":
+                return true;
+            default:
+                return false;
+        }
+    }
+    
+    /**
+     * Checks if a lexeme is a boolean keyword
+     */
+    private boolean isBooleanKeyword(String lexeme) {
+        switch (lexeme) {
             case "AND":
             case "OR":
             case "NOT":
@@ -319,6 +486,4 @@ private static final Color DEFAULT_COLOR     = new Color(197, 200, 198);  // Lig
                 return false;
         }
     }
-    
 }
-
