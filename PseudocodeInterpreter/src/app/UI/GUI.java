@@ -5,8 +5,14 @@
 package app.UI;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
 import pseudocode.errors.LexerException;
 import pseudocode.errors.ParserException;
 import pseudocode.errors.RuntimeError;
@@ -21,13 +27,95 @@ import pseudocode.parser.ProgramNode;
  * @author ispaycy
  */
 public class GUI extends javax.swing.JFrame {
-
+    private FileOperations fileOps;
+    private boolean isModified = false;
     /**
      * Creates new form GUI
+     * @throws java.io.IOException
      */
-    public GUI() {
+    public GUI() throws IOException {
         initComponents();
+        setTitle("Jernat Pseudocode Interpreter");
+        setIconImage(ImageIO.read(new File("icon.png")));
+        
+        fileOps = new FileOperations();
+    
+    // Track editor changes for modified status
+    jEditorPane1.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+        @Override
+        public void insertUpdate(javax.swing.event.DocumentEvent e) {
+            markAsModified();
+        }
+
+        @Override
+        public void removeUpdate(javax.swing.event.DocumentEvent e) {
+            markAsModified();
+        }
+
+        @Override
+        public void changedUpdate(javax.swing.event.DocumentEvent e) {
+            markAsModified();
+        }
+        });
     }
+    
+    private void markAsModified() {
+        if (!isModified) {
+            isModified = true;
+            updateWindowTitle();
+        }
+    }
+
+    private void markAsSaved() {
+        isModified = false;
+        updateWindowTitle();
+    }
+
+    private void updateWindowTitle() {
+        String title = "Jemat Pseudocode Interpreter";
+        File currentFile = fileOps.getCurrentFile();
+        if (currentFile != null) {
+            title += " - " + currentFile.getName();
+        } else {
+            title += " - Untitled";
+        }
+        if (isModified) {
+            title += " *";
+        }
+        setTitle(title);
+    }
+
+    private boolean checkUnsavedChanges() {
+        if (isModified) {
+            int result = JOptionPane.showConfirmDialog(
+                this,
+                "You have unsaved changes. Do you want to save before continuing?",
+                "Unsaved Changes",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+
+            if (result == JOptionPane.YES_OPTION) {
+                return saveCurrentFile();
+            } else if (result == JOptionPane.NO_OPTION) {
+                return true;
+            } else {
+                return false; // Cancel
+            }
+        }
+        return true;
+    }
+
+    private boolean saveCurrentFile() {
+        String content = jEditorPane1.getText();
+        if (fileOps.saveFile(this, content)) {
+            markAsSaved();
+            JOptionPane.showMessageDialog(this, "File saved successfully!");
+            return true;
+        }
+        return false;
+    }
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -42,14 +130,12 @@ public class GUI extends javax.swing.JFrame {
         BG = new javax.swing.JPanel();
         Tool = new javax.swing.JToolBar();
         New = new javax.swing.JButton();
+        Open = new javax.swing.JButton();
         Save = new javax.swing.JButton();
         SaveAs = new javax.swing.JButton();
-        Open = new javax.swing.JButton();
-        jSeparator9 = new javax.swing.JPopupMenu.Separator();
         Run = new javax.swing.JButton();
         CleanTerm = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
-        Files = new javax.swing.JPanel();
         jPanel5 = new javax.swing.JPanel();
         Output = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -67,22 +153,8 @@ public class GUI extends javax.swing.JFrame {
         jSeparator6 = new javax.swing.JPopupMenu.Separator();
         SaveAsFileCont = new javax.swing.JMenuItem();
         Help = new javax.swing.JMenu();
-        Instructions = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
-        Examples = new javax.swing.JMenu();
-        Sequence = new javax.swing.JMenuItem();
-        jSeparator2 = new javax.swing.JPopupMenu.Separator();
-        Selection = new javax.swing.JMenuItem();
-        jSeparator3 = new javax.swing.JPopupMenu.Separator();
-        Repetition = new javax.swing.JMenuItem();
-        Edit = new javax.swing.JMenu();
-        Copy = new javax.swing.JMenuItem();
-        jSeparator5 = new javax.swing.JPopupMenu.Separator();
-        Cut = new javax.swing.JMenuItem();
-        jSeparator4 = new javax.swing.JPopupMenu.Separator();
-        Paste = new javax.swing.JMenuItem();
         About = new javax.swing.JMenu();
-        AboutCont = new javax.swing.JMenuItem();
 
         jButton2.setText("newf");
         jButton2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -96,6 +168,7 @@ public class GUI extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(51, 51, 51));
+        setPreferredSize(new java.awt.Dimension(1280, 768));
 
         BG.setLayout(new java.awt.BorderLayout());
 
@@ -108,9 +181,10 @@ public class GUI extends javax.swing.JFrame {
         Tool.setRequestFocusEnabled(false);
 
         New.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/newF.png"))); // NOI18N
+        New.setToolTipText("New File");
         New.setFocusable(false);
         New.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        New.setPreferredSize(new java.awt.Dimension(50, 75));
+        New.setPreferredSize(new java.awt.Dimension(75, 75));
         New.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         New.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -119,29 +193,11 @@ public class GUI extends javax.swing.JFrame {
         });
         Tool.add(New);
 
-        Save.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/save.png"))); // NOI18N
-        Save.setFocusable(false);
-        Save.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        Save.setPreferredSize(new java.awt.Dimension(50, 75));
-        Save.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        Tool.add(Save);
-
-        SaveAs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/saveAs.png"))); // NOI18N
-        SaveAs.setFocusable(false);
-        SaveAs.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        SaveAs.setPreferredSize(new java.awt.Dimension(50, 75));
-        SaveAs.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        SaveAs.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                SaveAsActionPerformed(evt);
-            }
-        });
-        Tool.add(SaveAs);
-
         Open.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/open.png"))); // NOI18N
+        Open.setToolTipText("Open File");
         Open.setFocusable(false);
         Open.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        Open.setPreferredSize(new java.awt.Dimension(50, 75));
+        Open.setPreferredSize(new java.awt.Dimension(75, 75));
         Open.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         Open.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -150,15 +206,37 @@ public class GUI extends javax.swing.JFrame {
         });
         Tool.add(Open);
 
-        jSeparator9.setBackground(new java.awt.Color(51, 51, 51));
-        jSeparator9.setForeground(new java.awt.Color(51, 51, 51));
-        jSeparator9.setPreferredSize(new java.awt.Dimension(10, 9));
-        Tool.add(jSeparator9);
+        Save.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/save.png"))); // NOI18N
+        Save.setToolTipText("Save File");
+        Save.setFocusable(false);
+        Save.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        Save.setPreferredSize(new java.awt.Dimension(75, 75));
+        Save.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        Save.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SaveActionPerformed(evt);
+            }
+        });
+        Tool.add(Save);
+
+        SaveAs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/saveAs.png"))); // NOI18N
+        SaveAs.setToolTipText("Save File As");
+        SaveAs.setFocusable(false);
+        SaveAs.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        SaveAs.setPreferredSize(new java.awt.Dimension(75, 75));
+        SaveAs.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        SaveAs.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SaveAsActionPerformed(evt);
+            }
+        });
+        Tool.add(SaveAs);
 
         Run.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/run.png"))); // NOI18N
+        Run.setToolTipText("Run File");
         Run.setFocusable(false);
         Run.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        Run.setPreferredSize(new java.awt.Dimension(50, 75));
+        Run.setPreferredSize(new java.awt.Dimension(75, 75));
         Run.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         Run.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -168,9 +246,10 @@ public class GUI extends javax.swing.JFrame {
         Tool.add(Run);
 
         CleanTerm.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/clean.png"))); // NOI18N
+        CleanTerm.setToolTipText("Clean Output");
         CleanTerm.setFocusable(false);
         CleanTerm.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        CleanTerm.setPreferredSize(new java.awt.Dimension(50, 75));
+        CleanTerm.setPreferredSize(new java.awt.Dimension(75, 75));
         CleanTerm.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         CleanTerm.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -183,23 +262,6 @@ public class GUI extends javax.swing.JFrame {
 
         jPanel4.setBackground(new java.awt.Color(204, 255, 204));
         jPanel4.setLayout(new java.awt.BorderLayout());
-
-        Files.setBackground(new java.awt.Color(44, 44, 44));
-        Files.setPreferredSize(new java.awt.Dimension(200, 678));
-        Files.setRequestFocusEnabled(false);
-
-        javax.swing.GroupLayout FilesLayout = new javax.swing.GroupLayout(Files);
-        Files.setLayout(FilesLayout);
-        FilesLayout.setHorizontalGroup(
-            FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 200, Short.MAX_VALUE)
-        );
-        FilesLayout.setVerticalGroup(
-            FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 728, Short.MAX_VALUE)
-        );
-
-        jPanel4.add(Files, java.awt.BorderLayout.WEST);
 
         jPanel5.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         jPanel5.setPreferredSize(new java.awt.Dimension(100, 678));
@@ -277,68 +339,12 @@ public class GUI extends javax.swing.JFrame {
 
         Help.setForeground(new java.awt.Color(51, 51, 51));
         Help.setText("Help");
-
-        Instructions.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_I, java.awt.event.InputEvent.CTRL_DOWN_MASK));
-        Instructions.setText("Instructions");
-        Instructions.setAutoscrolls(true);
-        Instructions.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                InstructionsActionPerformed(evt);
-            }
-        });
-        Help.add(Instructions);
         Help.add(jSeparator1);
-
-        Examples.setText("Examples");
-        Examples.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
-
-        Sequence.setText("Sequence Control Structures");
-        Sequence.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                SequenceActionPerformed(evt);
-            }
-        });
-        Examples.add(Sequence);
-        Examples.add(jSeparator2);
-
-        Selection.setText("Selection Control Structures");
-        Examples.add(Selection);
-        Examples.add(jSeparator3);
-
-        Repetition.setText("Repetition Control Structures");
-        Examples.add(Repetition);
-
-        Help.add(Examples);
 
         Menu.add(Help);
 
-        Edit.setForeground(new java.awt.Color(51, 51, 51));
-        Edit.setText("Edit");
-
-        Copy.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.CTRL_DOWN_MASK));
-        Copy.setText("Copy");
-        Copy.setPreferredSize(new java.awt.Dimension(76, 25));
-        Edit.add(Copy);
-        Edit.add(jSeparator5);
-
-        Cut.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_X, java.awt.event.InputEvent.CTRL_DOWN_MASK));
-        Cut.setText("Cut");
-        Edit.add(Cut);
-        Edit.add(jSeparator4);
-
-        Paste.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_V, java.awt.event.InputEvent.CTRL_DOWN_MASK));
-        Paste.setText("Paste");
-        Paste.setPreferredSize(new java.awt.Dimension(76, 25));
-        Edit.add(Paste);
-
-        Menu.add(Edit);
-
         About.setForeground(new java.awt.Color(51, 51, 51));
         About.setText("About");
-
-        AboutCont.setText("About this software");
-        About.add(AboutCont);
-
         Menu.add(About);
 
         setJMenuBar(Menu);
@@ -348,14 +354,47 @@ public class GUI extends javax.swing.JFrame {
 
     private void SaveAsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveAsActionPerformed
         // TODO add your handling code here:
+        String content = jEditorPane1.getText();
+    if (fileOps.saveFileAs(this, content)) {
+        markAsSaved();
+        JOptionPane.showMessageDialog(this, "File saved successfully!");
+    }
+        
     }//GEN-LAST:event_SaveAsActionPerformed
 
     private void OpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OpenActionPerformed
         // TODO add your handling code here:
+        if (!checkUnsavedChanges()) {
+        return;
+    }
+    
+    File file = fileOps.openFile(this);
+    if (file != null) {
+        try {
+            String content = fileOps.readFile(file);
+            jEditorPane1.setText(content);
+            markAsSaved();
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, 
+                "Error reading file: " + e.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
     }//GEN-LAST:event_OpenActionPerformed
 
     private void NewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NewActionPerformed
         // TODO add your handling code here:
+        if (!checkUnsavedChanges()) {
+        return;
+    }
+    
+    File newFile = fileOps.createNewFile(this);
+    if (newFile != null) {
+        jEditorPane1.setText("");
+        markAsSaved();
+        JOptionPane.showMessageDialog(this, "New file created: " + newFile.getName());
+    }
     }//GEN-LAST:event_NewActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -409,18 +448,15 @@ public class GUI extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_RunActionPerformed
 
-    private void InstructionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_InstructionsActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_InstructionsActionPerformed
-
-    private void SequenceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SequenceActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_SequenceActionPerformed
-
     private void CleanTermActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CleanTermActionPerformed
         // Clear the output console
         jTextArea1.setText("");
     }//GEN-LAST:event_CleanTermActionPerformed
+
+    private void SaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveActionPerformed
+        // TODO add your handling code here:
+        saveCurrentFile();
+    }//GEN-LAST:event_SaveActionPerformed
 
     /**
      * @param args the command line arguments
@@ -452,40 +488,33 @@ public class GUI extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new GUI().setVisible(true);
+                try {
+                    new GUI().setVisible(true);
+                } catch (IOException ex) {
+                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu About;
-    private javax.swing.JMenuItem AboutCont;
     private javax.swing.JPanel BG;
     private javax.swing.JButton CleanTerm;
-    private javax.swing.JMenuItem Copy;
-    private javax.swing.JMenuItem Cut;
-    private javax.swing.JMenu Edit;
     private javax.swing.JPanel Editor;
-    private javax.swing.JMenu Examples;
     private javax.swing.JMenu File;
-    private javax.swing.JPanel Files;
     private javax.swing.JMenu Help;
-    private javax.swing.JMenuItem Instructions;
     private javax.swing.JMenuBar Menu;
     private javax.swing.JButton New;
     private javax.swing.JMenuItem NewFileCont;
     private javax.swing.JButton Open;
     private javax.swing.JMenuItem OpenFileCont;
     private javax.swing.JPanel Output;
-    private javax.swing.JMenuItem Paste;
-    private javax.swing.JMenuItem Repetition;
     private javax.swing.JButton Run;
     private javax.swing.JButton Save;
     private javax.swing.JButton SaveAs;
     private javax.swing.JMenuItem SaveAsFileCont;
     private javax.swing.JMenuItem SaveFileCont;
-    private javax.swing.JMenuItem Selection;
-    private javax.swing.JMenuItem Sequence;
     private javax.swing.JToolBar Tool;
     private javax.swing.JButton jButton2;
     private javax.swing.JEditorPane jEditorPane1;
@@ -494,14 +523,9 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JPopupMenu.Separator jSeparator1;
-    private javax.swing.JPopupMenu.Separator jSeparator2;
-    private javax.swing.JPopupMenu.Separator jSeparator3;
-    private javax.swing.JPopupMenu.Separator jSeparator4;
-    private javax.swing.JPopupMenu.Separator jSeparator5;
     private javax.swing.JPopupMenu.Separator jSeparator6;
     private javax.swing.JPopupMenu.Separator jSeparator7;
     private javax.swing.JPopupMenu.Separator jSeparator8;
-    private javax.swing.JPopupMenu.Separator jSeparator9;
     private javax.swing.JTextArea jTextArea1;
     // End of variables declaration//GEN-END:variables
 }
