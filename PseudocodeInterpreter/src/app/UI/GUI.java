@@ -13,6 +13,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
+import javax.swing.text.StyledDocument;
+import javax.swing.SwingUtilities;
 import pseudocode.errors.LexerException;
 import pseudocode.errors.ParserException;
 import pseudocode.errors.RuntimeError;
@@ -29,6 +31,9 @@ import pseudocode.parser.ProgramNode;
 public class GUI extends javax.swing.JFrame {
     private FileOperations fileOps;
     private boolean isModified = false;
+    private SyntaxHighlighter syntaxHighlighter;
+    private javax.swing.Timer highlightTimer;
+    private javax.swing.JTextPane textPane; // The actual text pane for syntax highlighting
     /**
      * Creates new form GUI
      * @throws java.io.IOException
@@ -38,18 +43,56 @@ public class GUI extends javax.swing.JFrame {
         setTitle("Jernat Pseudocode Interpreter");
         setIconImage(ImageIO.read(new File("icon.png")));
         
+        // Replace JEditorPane with JTextPane (for syntax highlighting support)
+        // The form file creates JEditorPane, but we need JTextPane for styled text
+        textPane = new javax.swing.JTextPane();
+        textPane.setBackground(new java.awt.Color(34, 34, 34));
+        textPane.setForeground(new java.awt.Color(204, 204, 204));
+        if (jEditorPane1 != null) {
+            textPane.setFont(jEditorPane1.getFont());
+            textPane.setText(jEditorPane1.getText());
+        } else {
+            // Set default font if jEditorPane1 wasn't initialized yet
+            textPane.setFont(new java.awt.Font(java.awt.Font.MONOSPACED, java.awt.Font.PLAIN, 12));
+        }
+        jScrollPane1.setViewportView(textPane);
+        
         fileOps = new FileOperations();
     
-    // Track editor changes for modified status
-    jEditorPane1.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+        // Initialize syntax highlighter
+        StyledDocument styledDoc = textPane.getStyledDocument();
+        syntaxHighlighter = new SyntaxHighlighter(styledDoc);
+        
+        // Initial highlighting
+        SwingUtilities.invokeLater(() -> {
+            syntaxHighlighter.highlightDocument();
+        });
+    
+        // Create a timer to debounce highlighting (wait 150ms after user stops typing)
+        highlightTimer = new javax.swing.Timer(150, (e) -> {
+            try {
+                String text = textPane.getText();
+                syntaxHighlighter.highlightText(text, 0);
+            } catch (Exception ex) {
+                // Ignore highlighting errors
+            }
+        });
+        highlightTimer.setRepeats(false); // Only fire once
+    
+    // Track editor changes for modified status and syntax highlighting
+    textPane.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
         @Override
         public void insertUpdate(javax.swing.event.DocumentEvent e) {
             markAsModified();
+            // Debounce syntax highlighting - restart timer on each keystroke
+            highlightTimer.restart();
         }
 
         @Override
         public void removeUpdate(javax.swing.event.DocumentEvent e) {
             markAsModified();
+            // Debounce syntax highlighting - restart timer on each deletion
+            highlightTimer.restart();
         }
 
         @Override
@@ -107,7 +150,7 @@ public class GUI extends javax.swing.JFrame {
     }
 
     private boolean saveCurrentFile() {
-        String content = jEditorPane1.getText();
+        String content = textPane.getText();
         if (fileOps.saveFile(this, content)) {
             markAsSaved();
             JOptionPane.showMessageDialog(this, "File saved successfully!");
@@ -354,7 +397,7 @@ public class GUI extends javax.swing.JFrame {
 
     private void SaveAsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveAsActionPerformed
         // TODO add your handling code here:
-        String content = jEditorPane1.getText();
+        String content = textPane.getText();
     if (fileOps.saveFileAs(this, content)) {
         markAsSaved();
         JOptionPane.showMessageDialog(this, "File saved successfully!");
@@ -372,8 +415,12 @@ public class GUI extends javax.swing.JFrame {
     if (file != null) {
         try {
             String content = fileOps.readFile(file);
-            jEditorPane1.setText(content);
+            textPane.setText(content);
             markAsSaved();
+            // Re-highlight after loading file
+            SwingUtilities.invokeLater(() -> {
+                syntaxHighlighter.highlightDocument();
+            });
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, 
                 "Error reading file: " + e.getMessage(), 
@@ -391,8 +438,12 @@ public class GUI extends javax.swing.JFrame {
     
     File newFile = fileOps.createNewFile(this);
     if (newFile != null) {
-        jEditorPane1.setText("");
+        textPane.setText("");
         markAsSaved();
+        // Re-highlight after clearing
+        SwingUtilities.invokeLater(() -> {
+            syntaxHighlighter.highlightDocument();
+        });
         JOptionPane.showMessageDialog(this, "New file created: " + newFile.getName());
     }
     }//GEN-LAST:event_NewActionPerformed
@@ -403,7 +454,7 @@ public class GUI extends javax.swing.JFrame {
 
     private void RunActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RunActionPerformed
         // Execute pseudocode from the editor and show output in the console area
-        String program = jEditorPane1.getText();
+        String program = textPane.getText();
         jTextArea1.setText("");
 
         if (program == null || program.trim().isEmpty()) {
@@ -517,7 +568,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JMenuItem SaveFileCont;
     private javax.swing.JToolBar Tool;
     private javax.swing.JButton jButton2;
-    private javax.swing.JEditorPane jEditorPane1;
+    private javax.swing.text.JTextComponent jEditorPane1; // JTextPane for syntax highlighting (replaced in constructor)
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
