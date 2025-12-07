@@ -20,13 +20,14 @@ public class SyntaxHighlighter {
     private final StyledDocument document;
     
     // Color scheme
-    private static final Color KEYWORD_COLOR = new Color(204, 120, 50);      // Orange
-    private static final Color STRING_COLOR = new Color(152, 195, 121);      // Green
-    private static final Color NUMBER_COLOR = new Color(209, 154, 102);     // Light brown
-    private static final Color OPERATOR_COLOR = new Color(180, 180, 180);   // Light gray
-    private static final Color IDENTIFIER_COLOR = new Color(220, 220, 220); // Light gray
-    private static final Color COMMENT_COLOR = new Color(106, 153, 85);     // Dark green
-    private static final Color DEFAULT_COLOR = new Color(204, 204, 204);    // Default text color
+private static final Color KEYWORD_COLOR     = new Color(198, 120, 221);  // Purple
+private static final Color STRING_COLOR      = new Color(152, 195, 121);  // Green
+private static final Color NUMBER_COLOR      = new Color(224, 108, 117);  // Red/Pink
+private static final Color OPERATOR_COLOR    = new Color( 97, 175, 239);  // Blue
+private static final Color IDENTIFIER_COLOR  = new Color(171, 178, 191);  // Soft Gray
+private static final Color COMMENT_COLOR     = new Color( 92,  99, 112);  // Dim Gray
+private static final Color DEFAULT_COLOR     = new Color(197, 200, 198);  // Light Gray
+
     
     // Styles
     private Style keywordStyle;
