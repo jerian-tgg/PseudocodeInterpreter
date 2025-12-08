@@ -19,6 +19,7 @@ import pseudocode.errors.LexerException;
 import pseudocode.errors.ParserException;
 import pseudocode.errors.RuntimeError;
 import pseudocode.interpreter.Interpreter;
+import pseudocode.interpreter.BuiltInFunctions;
 import pseudocode.lexer.Lexer;
 import pseudocode.lexer.Token;
 import pseudocode.parser.Parser;
@@ -519,6 +520,11 @@ public class GUI extends javax.swing.JFrame {
         System.setOut(ps);
 
         try {
+            // Provide a GUI-based input provider so INPUT statements do not hang
+            BuiltInFunctions.setInputProvider(prompt ->
+                JOptionPane.showInputDialog(this, prompt, "Input", JOptionPane.QUESTION_MESSAGE)
+            );
+
             Lexer lexer = new Lexer(program);
             List<Token> tokens = lexer.tokenize();
 
